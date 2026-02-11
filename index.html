@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Black Ink Tattoo</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Playfair Display', serif;color:#fff;background:#000;overflow-x:hidden;}
+canvas#bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}
+
+nav{position:fixed;top:0;width:100%;background:rgba(0,0,0,0.9);padding:15px;display:flex;justify-content:center;gap:25px;z-index:100;}
+nav a{color:#fff;text-decoration:none;font-weight:700;letter-spacing:1.5px;transition:.3s;}
+nav a:hover{color:#f00;}
+
+.hero{padding:180px 10%;text-align:center}
+.hero h1{font-size:4rem;letter-spacing:4px;margin-bottom:10px;}
+
+section{padding:80px 10%;position:relative;z-index:10}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px}
+.card{background:#111;padding:20px;border:1px solid #333;transition:.3s;}
+.card:hover{transform:scale(1.03);border-color:#f00;}
+
+.portfolio-buttons{text-align:center;margin-bottom:30px;}
+.portfolio-buttons button{background:#111;border:1px solid #333;color:#fff;padding:10px 20px;margin:5px;cursor:pointer;}
+.portfolio-item{display:none;background:#111;padding:20px;border:1px solid #333;}
+
+textarea,input,select,button{
+width:100%;padding:12px;margin-bottom:10px;background:#000;border:1px solid #444;color:#fff;
+}
+
+button{cursor:pointer;background:#111;}
+button:hover{background:#222;}
+
+.review{background:#111;padding:20px;border:1px solid #333;margin-bottom:15px;text-align:center;}
+
+#map{height:400px;width:100%;border:2px solid #444;}
+
+.home-btn{
+display:inline-block;
+padding:10px 20px;
+background:#111;
+border:1px solid #333;
+color:#fff;
+text-decoration:none;
+margin-top:30px;
+}
+.home-btn:hover{border-color:#f00;}
+
+footer{text-align:center;padding:30px;border-top:1px solid #222;font-size:.9rem;}
+</style>
+</head>
+
+<body>
+
+<canvas id="bg"></canvas>
+
+<nav>
+<a href="#">Home</a>
+<a href="#artisti">Artisti</a>
+<a href="#portfolio">Portfolio</a>
+<a href="#ai">AI Tattoo</a>
+<a href="#contatti">Contatti</a>
+<a href="#mappa">Dove Siamo</a>
+</nav>
+
+<section class="hero">
+<h1>BLACK INK TATTOO</h1>
+<p>Studio di tatuaggi artistici – Professionalità & Creatività</p>
+</section>
+
+<section id="artisti">
+<h2>ARTISTI</h2>
+<div class="grid">
+<div class="card"><h3>Alessio Sesa</h3><p>Manager & Tatuatore</p></div>
+<div class="card"><h3>Marco Ink</h3><p>Old School</p></div>
+<div class="card"><h3>Luna Black</h3><p>Minimal</p></div>
+</div>
+<div style="text-align:center"><a href="#" class="home-btn">⬆ Torna alla Home</a></div>
+</section>
+
+<section id="portfolio">
+<h2>PORTFOLIO</h2>
+<div class="portfolio-buttons">
+<button onclick="showPortfolio('blackwork')">Blackwork</button>
+<button onclick="showPortfolio('realismo')">Realismo</button>
+</div>
+
+<div id="blackwork" class="portfolio-item">
+<h3>Blackwork</h3>
+<p>Linee forti e contrasti intensi.</p>
+</div>
+
+<div id="realismo" class="portfolio-item">
+<h3>Realismo</h3>
+<p>Ritratti realistici e ombreggiature dettagliate.</p>
+</div>
+
+<div style="text-align:center"><a href="#" class="home-btn">⬆ Torna alla Home</a></div>
+</section>
+
+<section id="ai">
+<h2>CREA IL TUO TATUAGGIO CON AI</h2>
+
+<textarea id="aiPrompt" placeholder="Descrivi il tatuaggio..."></textarea>
+<button onclick="generateTattoo()">Genera Anteprima</button>
+
+<div id="aiResult" style="margin-top:20px;"></div>
+
+<div style="text-align:center"><a href="#" class="home-btn">⬆ Torna alla Home</a></div>
+</section>
+
+<section id="contatti">
+<h2>CONTATTI</h2>
+<p>
+📞 389 003 0769<br>
+✉️ blackinktattoo@gmail.com
+</p>
+<div style="text-align:center"><a href="#" class="home-btn">⬆ Torna alla Home</a></div>
+</section>
+
+<section id="mappa">
+<h2>DOVE SIAMO</h2>
+<div id="map"></div>
+<div style="text-align:center"><a href="#" class="home-btn">⬆ Torna alla Home</a></div>
+</section>
+
+<footer>© Black Ink Tattoo – Bologna</footer>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+// PORTFOLIO
+function showPortfolio(id){
+document.querySelectorAll('.portfolio-item')
+.forEach(i=>i.style.display='none');
+document.getElementById(id).style.display='block';
+}
+
+// AI GENERATION (serve API KEY)
+async function generateTattoo(){
+const prompt=document.getElementById("aiPrompt").value;
+const result=document.getElementById("aiResult");
+
+if(!prompt){result.innerHTML="Scrivi un'idea ❌";return;}
+
+result.innerHTML="Generazione in corso... ⏳";
+
+try{
+const response=await fetch("https://api.openai.com/v1/images/generations",{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"Authorization":"Bearer INSERISCI_LA_TUA_API_KEY"
+},
+body:JSON.stringify({
+model:"gpt-image-1",
+prompt:prompt,
+size:"512x512"
+})
+});
+
+const data=await response.json();
+result.innerHTML=`<img src="${data.data[0].url}" style="max-width:100%;">`;
+
+}catch(error){
+result.innerHTML="Errore nella generazione ❌";
+}
+}
+
+// MAPPA
+const map = L.map('map').setView([44.4949, 11.3426],16);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+attribution:'© OpenStreetMap'
+}).addTo(map);
+L.marker([44.4949,11.3426]).addTo(map).bindPopup("Black Ink Tattoo – Bologna");
+
+// SFONDO
+const c=document.getElementById("bg");
+const ctx=c.getContext("2d");
+c.width=window.innerWidth;
+c.height=window.innerHeight;
+let dots=[];
+for(let i=0;i<60;i++){
+dots.push({x:Math.random()*c.width,y:Math.random()*c.height,vx:(Math.random()-0.5)*0.5,vy:(Math.random()-0.5)*0.5});
+}
+function animate(){
+ctx.clearRect(0,0,c.width,c.height);
+ctx.fillStyle="white";
+dots.forEach(d=>{
+d.x+=d.vx; d.y+=d.vy;
+if(d.x<0||d.x>c.width)d.vx*=-1;
+if(d.y<0||d.y>c.height)d.vy*=-1;
+ctx.fillRect(d.x,d.y,2,2);
+});
+requestAnimationFrame(animate);
+}
+animate();
+</script>
+
+</body>
+</html>
